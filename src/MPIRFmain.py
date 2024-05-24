@@ -120,8 +120,8 @@ Simulate measurement data from file and reconstrution
 '''
 def SimulationMain(MethodType,
                    PhanType,Temperature,Diameter,MagSaturation,Concentration,
-                   SelectGradietX,SelectGradietY,
-                   DriveFrequencyX,DriveFrequencyY,DriveAmplitudeX,DriveAmplitudeY,
+                   SelectGradietX,SelectGradietY,SelectGradietZ,
+                   DriveFrequencyX,DriveFrequencyY,DriveFrequencyZ,DriveAmplitudeX,DriveAmplitudeY,DriveAmplitudeZ,
                    RepetitionTime,SampleFrequency,
                    Itera,Theta,Delta,ThresholdSeg):
 
@@ -130,7 +130,8 @@ def SimulationMain(MethodType,
             # Create a P shape phantom.
             phan = PPhantomClass(Temperature,Diameter,MagSaturation,Concentration)
         elif PhanType==1:
-            # Create a E shape phantom.
+            # Create a E shape phantom. 
+            # Not modified yet
             phan = EPhantomClass(Temperature, Diameter, MagSaturation, Concentration)
     except:
         return 1, None, None, None, None, None, None
@@ -139,8 +140,8 @@ def SimulationMain(MethodType,
         try:
             # Call System-matrix base scanner Component to simulate system matrix scanner.
             scanner = MScannerClass(phan,
-                                SelectGradietX, SelectGradietY,
-                                DriveFrequencyX, DriveFrequencyY, DriveAmplitudeX, DriveAmplitudeY,
+                                SelectGradietX, SelectGradietY,SelectGradietZ,
+                                DriveFrequencyX, DriveFrequencyY, DriveFrequencyZ,DriveAmplitudeX, DriveAmplitudeY,DriveAmplitudeZ,
                                 RepetitionTime, SampleFrequency,Delta)
         except:
             return 1, None, None, None, None, None, None

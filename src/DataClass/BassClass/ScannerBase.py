@@ -5,6 +5,8 @@ import abc
 import numpy as np
 from Config.CommFunc import *
 from Config.ConstantList import *
+from vedo import Volume,show
+import matplotlib.pyplot as plt
 
 '''
 ScannerBase.py: The base class of the Simulation component.
@@ -17,10 +19,13 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
                  VirtualPhantom,
                  SelectGradietX,
                  SelectGradietY,
+                 SelectGradietZ,
                  DriveFrequencyX,
                  DriveFrequencyY,
+                 DriveFrequencyZ,
                  DriveAmplitudeX,
                  DriveAmplitudeY,
+                 DriveAmplitudeZ,
                  RepetitionTime,
                  SampleFrequency
                  ):
@@ -32,35 +37,46 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
 
         self._Gx = SelectGradietX / U0
         self._Gy = SelectGradietY / U0
-        self._Gg = np.array([[self._Gx], [self._Gy]])
+        self._Gz = SelectGradietZ / U0
+        '''
+        Gradient Field
+        '''
+        self._Gg = np.array([[self._Gx], [self._Gy],[self._Gz]])
 
         self._Fx = DriveFrequencyX
         self._Fy = DriveFrequencyY
-        self._Tr = RepetitionTime
+        self._Fz = DriveFrequencyZ
+        self._Tr = RepetitionTime 
 
         self._Ay = DriveAmplitudeX / U0
         self._Ax = DriveAmplitudeY / U0
+        self._Az = DriveAmplitudeZ / U0
 
-        self._Fs = SampleFrequency
+        self._Fs = SampleFrequency 
 
         self._Fn = round(self._Tr * self._Fs)
 
         self._Xmax = self._Ax / self._Gx
         self._Ymax = self._Ay / self._Gy
+        self._Zmax = self._Az / self._Gz
 
         self._Step = 1e-4
 
         self._XSquence = np.arange(-self._Xmax, self._Xmax + self._Step, self._Step)
         self._YSquence = np.arange(-self._Ymax, self._Ymax + self._Step, self._Step)
+        self._ZSquence = np.arange(-self._Zmax, self._Zmax + self._Step, self._Step)
         self._Xn = len(self._YSquence)
         self._Yn = len(self._XSquence)
+        self._Zn = len(self._ZSquence)
 
         self._TSquence = np.arange(0, self._Tr + self._Tr / self._Fn, self._Tr / self._Fn)
 
         self._DHx, self._DeriDHx = self.__DriveStrength(self._Ax, self._Fx, self._TSquence)
         self._DHy, self._DeriDHy = self.__DriveStrength(self._Ay, self._Fy, self._TSquence)
+        self._DHz, self._DeriDHz = self.__DriveStrength(self._Az, self._Fz, self._TSquence)
 
-        self._DH = np.array([self._DHx, self._DHy])
+
+        self._DH = np.array([self._DHx, self._DHy, self._DHz])
         self._DeriDH = np.array([self._DeriDHx, self._DeriDHy])
 
         self._Rffp = np.divide(self._DH, np.tile(self._Gg, (1, np.shape(self._DH)[1])))
@@ -68,7 +84,18 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
         self._Rffp0=self._Rffp
         self._Xffp = self._Rffp[0]
         self._Yffp = self._Rffp[1]
+        self._Zffp = self._Rffp[2]
+        # import matplotlib.pyplot as plt
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+        # # plt.plot(self._Yffp,self._Zffp)
+        # ax.scatter(self._Xffp,self._Yffp,self._Zffp)
+        # plt.show()
+        # # from vedo import Volume,show
+        # # v = np.zeros([100,100,100])
+        # # vol = Volume()
 
+        #to be modified
         self._Rffp = self.__MAPPING()
 
     '''
@@ -78,8 +105,10 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
     '''
     def __MAPPING(self):
         self._Rffp[0] = self._Rffp[0] + self._Xmax
-        self._Rffp[1] = self._Rffp[1] - self._Ymax
-        self._Rffp[1] = self._Rffp[1] * -1
+        self._Rffp[1] = self._Rffp[1] + self._Ymax
+        self._Rffp[2] = self._Rffp[2] + self._Zmax
+        # self._Rffp[1] = self._Rffp[1] - self._Ymax
+        # self._Rffp[1] = self._Rffp[1] * -1
         self._Rffp2=self._Rffp
         self._Rffp = self._Rffp * (1/self._Step)
         self._Rffp1=self._Rffp
@@ -93,13 +122,16 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
 
     #Initialize the phantom.
     def __init_Phantom(self):
-        self._Phantom._Picture = self._Phantom._get_Picture(self._Phantom._Concentration, self._Xn, self._Yn)
-        GSc = np.zeros((self._Xn, self._Yn, 2))
+        self._Phantom._Picture = self._Phantom._get_Picture(self._Phantom._Concentration, self._Xn, self._Yn,self._Zn)
+
+        GSc = np.zeros((self._Xn, self._Yn, 3))
+
         for i in range(self._Xn):
             y = (i) * (1e-4) * (-1) + self._Ymax
             for j in range(self._Yn):
                 x = (j) * (1e-4) - self._Xmax
-                temp=self._Gg*[[x], [y]]
+
+                temp=self._Gg[0:2]*[[x], [y]]
                 GSc[i, j, 0] = temp[0]
                 GSc[i, j, 1] = temp[1]
         self._Fn=self._Fn+1
@@ -134,32 +166,62 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
 
         return Voltage
 
+    
     # Calculate the induced voltage of magnetic particles with CPU.
     def _get_Voltage_CPU(self):
 
         GSc=self.__init_Phantom()
 
-        Voltage = np.zeros((2, self._Fn))
-
+        Voltage = np.zeros((3, self._Fn))
+        # return Voltage
         self._HFieldStrength=np.zeros((self._Xn,self._Yn,self._Fn))
-
+        # initial_bounds = vol.bounds()
         for i in range(self._Fn):
+            vol = Volume(self._Phantom._Picture)
+            rotated_vol = vol.rotate_z(0 * i,(60,60,60))
+            rotated_phanpic = rotated_vol.tonumpy()
+
+            rotated_vol.modified()
+            
+            # console.print("{}/{} is completed".format(i,self._Fn))
             Coeff = self._CoilSensitivity * self._Phantom._Mm * self._Phantom._Bcoeff * self._DeriDH[:, i]
             DHt = np.tile(self._DH[:, i], (self._Xn, self._Yn, 1))
             Gs = np.subtract(DHt, GSc)
             self._HFieldStrength[:, :, i ] = np.sqrt(Gs[:, :, 1] ** 2 + Gs[:, :, 0] ** 2)
-            DLFTemp = (1 / ((self._Phantom._Bcoeff * self._HFieldStrength[:, :, i ]) ** 2)) - (1 / ((np.sinh(self._Phantom._Bcoeff * self._HFieldStrength[:, :, i ])) ** 2))
-            DLF=np.zeros((self._Xn, self._Yn, 2))
-            DLF[:, :, 0]=DLFTemp
-            DLF[:, :, 1] = DLFTemp
 
-            Phanpic = np.tile(np.transpose(self._Phantom._Picture), (2, 1, 1))
+            DLFTemp = (1 / ((self._Phantom._Bcoeff * self._HFieldStrength[:, :, i ]) ** 2)) - (1 / ((np.sinh(self._Phantom._Bcoeff * self._HFieldStrength[:, :, i ])) ** 2))
+            # DLF=np.zeros((self._Xn, self._Yn, 3))
+            DLFTemp = np.tile(DLFTemp,(121,1,1))
+            DLF = np.zeros((self._Zn,self._Xn,self._Yn,2))
+            DLF[:,:,:,0] = DLFTemp
+            DLF[:,:,:,1] = DLFTemp
+
+            
+            [m,n,p] = rotated_phanpic.shape
+            Phanpic = rotated_phanpic[m//2-60:m//2+61,n//2-60:n//2+61,p//2-60:p//2+61]
+            Phanpic = np.tile(np.transpose(Phanpic), (2,1, 1, 1))
             Phanpic = np.transpose(Phanpic)
-            Coeff = np.tile(Coeff, (self._Xn, self._Yn, 1))
+            # v = Volume(Phanpic)
+            # show(v,__doc__,axes=1).close()
+            # fig = plt.figure()
+            # plt.imshow(Phanpic[:,:,0])
+            # plt.show()
+            
+            # vol0 = Volume(DLFTemp).cmap('rainbow').add_scalarbar3d()
+            # vol1 = Volume(Phanpic[:,:,:,0]).cmap('rainbow').add_scalarbar3d()
+            # show([vol0,vol1],__doc__,axes=1).close()
+            Coeff = np.tile(Coeff, (self._Xn, self._Yn, self._Zn,1))
             s = Phanpic * Coeff
             Sig = s * DLF
-            Voltage[0, i] = np.sum(Sig[:, :, 0])
-            Voltage[1, i] = np.sum(Sig[:, :, 1])
+            # fig = plt.figure()
+            # plt.imshow(s[0])
+            # plt.show()
+            # fig2 = plt.figure()
+            # plt.imshow(DLF[0])
+            # plt.show()
+            Voltage[0, i] = np.sum(Sig[:,:, :,0])
+            Voltage[1, i] = np.sum(Sig[:,:, :,1])
+            # Voltage[2, i] = np.sum(Sig[:,:, :])
 
         return Voltage
 

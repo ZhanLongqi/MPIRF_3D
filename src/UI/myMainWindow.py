@@ -111,10 +111,13 @@ class QmyMainWindow(QMainWindow):
                    Concentration,
                    SelectGradietX,
                    SelectGradietY,
+                   SelectGradietZ,
                    DriveFrequencyX,
                    DriveFrequencyY,
+                   DriveFrequencyZ,
                    DriveAmplitudeX,
                    DriveAmplitudeY,
+                   DriveAmplitudeZ,
                    RepetitionTime,
                    SampleFrequency,
                    Itera,
@@ -130,10 +133,13 @@ class QmyMainWindow(QMainWindow):
                                  Concentration,
                                  SelectGradietX,
                                  SelectGradietY,
+                                 SelectGradietZ,
                                  DriveFrequencyX,
                                  DriveFrequencyY,
+                                 DriveFrequencyZ,
                                  DriveAmplitudeX,
                                  DriveAmplitudeY,
+                                 DriveAmplitudeZ,
                                  RepetitionTime,
                                  SampleFrequency,
                                  Itera,
@@ -156,7 +162,7 @@ class QmyMainWindow(QMainWindow):
 
       self.ui.chartViewPie.figure.clear()
       ax1 = self.ui.chartViewPie.figure.add_subplot(2, 4, 1, label="points")
-      ax1.imshow(x)
+      ax1.imshow(x[0])
       ax1.set_title("Virtual Phantom")
 
       ax2 = self.ui.chartViewPie.figure.add_subplot(2, 4, 2, label="points")
@@ -269,10 +275,13 @@ class QmyMainWindow(QMainWindow):
 
           SelectGradietX=float(self.ui.pieEdit2_2.text())
           SelectGradietY=float(self.ui.pieEdit3_2.text())
+          SelectGradietZ=SelectGradietX
           DriveFrequencyX=float(self.ui.pieEdit4_2.text())*1e3
           DriveFrequencyY=float(self.ui.pieEdit5_2.text())*1e3
+          DriveFrequencyZ=DriveFrequencyX * 1.2
           DriveAmplitudeX=float(self.ui.pieEdit6_2.text())*1e-3
           DriveAmplitudeY=float(self.ui.pieEdit7_2.text())*1e-3
+          DriveAmplitudeZ=DriveAmplitudeX 
           RepetitionTime=float(self.ui.pieEdit8_2.text())*1e-6
           SampleFrequency=float(self.ui.pieEdit9_2.text())*1e6
 
@@ -292,10 +301,13 @@ class QmyMainWindow(QMainWindow):
                        Concentration,
                        SelectGradietX,
                        SelectGradietY,
+                       SelectGradietZ,
                        DriveFrequencyX,
                        DriveFrequencyY,
+                       DriveFrequencyZ,
                        DriveAmplitudeX,
                        DriveAmplitudeY,
+                       DriveAmplitudeZ,
                        RepetitionTime,
                        SampleFrequency,
                        Iterations,

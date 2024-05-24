@@ -10,10 +10,13 @@ class MScannerClass(ScannerBaseClass):
                  VirtualPhantom,
                  SelectGradietX=2.0,
                  SelectGradietY=2.0,
+                 SelectGradietZ=2.0,
                  DriveFrequencyX=2500000.0 / 102.0,
                  DriveFrequencyY=2500000.0 / 96.0,
+                 DriveFrequencyZ=2500000.0 / 100.0,
                  DriveAmplitudeX=12e-3,
                  DriveAmplitudeY=12e-3,
+                 DriveAmplitudeZ=12e-3,
                  RepetitionTime=6.528e-4,
                  SampleFrequency=2.5e6,
                  DeltaConcentration=50e-3):
@@ -21,10 +24,13 @@ class MScannerClass(ScannerBaseClass):
         super().__init__(VirtualPhantom,
                          SelectGradietX,
                          SelectGradietY,
+                         SelectGradietZ,
                          DriveFrequencyX,
                          DriveFrequencyY,
+                         DriveFrequencyZ,
                          DriveAmplitudeX,
                          DriveAmplitudeY,
+                         DriveAmplitudeZ,
                          RepetitionTime,
                          SampleFrequency)
 
@@ -37,15 +43,15 @@ class MScannerClass(ScannerBaseClass):
         self.Message[MEASUREMENT][MEASIGNAL] = np.transpose(self.Message[MEASUREMENT][MEASIGNAL])
         temp = np.fft.fft(np.transpose(self.Message[MEASUREMENT][MEASIGNAL]) * 1000)
         temp = np.transpose(temp)
-        self.Message[MEASUREMENT][MEASIGNAL] = np.add(temp[:, 0], temp[:, 1])
+        self.Message[MEASUREMENT][MEASIGNAL] = np.add(temp[:, 0], temp[:, 1], temp[:,2])
         return True
 
     #Calculate the system matrix of MPI scanner.
-    def _get_AuxSignal(self):
-
+    def _get_AuxSignal(self):  
+        # return 0
         C = np.ones((self._Xn, self._Yn,2))
         C = C * self.__DeltaConcentration
-        AuxSignal=np.zeros((self._Fn,self._Xn,self._Yn,2))
+        AuxSignal=np.zeros((self._Fn, self._Xn,self._Yn,2))
         DLF = np.zeros((self._Xn, self._Yn, 2))
         for i in range(self._Fn):
             Coeff = self._CoilSensitivity * self._Phantom._Mm * self._Phantom._Bcoeff * self._DeriDH[:, i]
@@ -53,15 +59,19 @@ class MScannerClass(ScannerBaseClass):
                         1 / ((np.sinh(self._Phantom._Bcoeff * self._HFieldStrength[:, :, i])) ** 2))
             DLF[:, :, 0] = DLFTemp
             DLF[:, :, 1] = DLFTemp
+            # DLF[:, :, :, 2] = DLFTemp
+            
             s = C * Coeff
-            AuxSignal[i, :, :, :] = s * DLF
+            AuxSignal[i, :, :] = s * DLF
 
         AuxSignal = np.reshape(AuxSignal, (self._Fn,self._Xn*self._Yn,2))
         AuxSignal = AuxSignal / self.__DeltaConcentration
         tempx = AuxSignal[:, :, 0]
         tempy = AuxSignal[:, :, 1]
 
+
         tempx = np.fft.fft(np.transpose(tempx) * 1000)
         tempy = np.fft.fft(np.transpose(tempy) * 1000)
+
         AuxSignal = np.transpose(np.add(tempx, tempy))
         return AuxSignal

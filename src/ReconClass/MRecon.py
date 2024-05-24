@@ -3,6 +3,7 @@
 from ReconClass.BaseClass.ReconBase import *
 from Config.ConstantList import *
 import numpy as np
+import matplotlib.pyplot as plt
 
 '''
 MRecon.py: The MRecon Class reconstruct the MPI image signal based on the system matrix method.
@@ -90,5 +91,9 @@ class MReconClass(ReconBaseClass):
                 x.imag = 0
             if enforcePositive:
                 x = x * (x.real > 0)
+            # t = x.real.reshape((121,121))
+            # plt.imshow( np.array(t))
+            # plt.show()
+
 
         return x
