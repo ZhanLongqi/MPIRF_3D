@@ -67,7 +67,7 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
         self._ZSquence = np.arange(-self._Zmax, self._Zmax + self._Step, self._Step)
         self._Xn = len(self._YSquence)
         self._Yn = len(self._XSquence)
-        self._Zn = len(self._ZSquence)
+        self._Zn = 32#len(self._ZSquence)
 
         self._TSquence = np.arange(0, self._Tr + self._Tr / self._Fn, self._Tr / self._Fn)
 
@@ -159,7 +159,7 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
 
             Phanpic = np.tile(np.transpose(self._Phantom._Picture), (2, 1, 1))
             Phanpic = np.transpose(Phanpic)
-            Coeff = np.tile(Coeff, (self._Xn, self._Yn, 1))
+            Coeff = np.tile(Coeff, (self._Xn, self._Yn, 1))      
             Voltage[0, i] = np.sum(MNPMultiply(Phanpic[:,:,0] , Coeff[:,:,0] , DLF[:,:,0]))
             Voltage[1, i] = np.sum(MNPMultiply(Phanpic[:,:,1] , Coeff[:,:,1] , DLF[:,:,1]))
             temp=0
@@ -173,25 +173,21 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
         GSc=self.__init_Phantom()
 
         Voltage = np.zeros((3, self._Fn))
-        # return Voltage
-        self._HFieldStrength=np.zeros((self._Xn,self._Yn,self._Fn))
-        # initial_bounds = vol.bounds()
-        for i in range(self._Fn):
-            vol = Volume(self._Phantom._Picture)
-            rotated_vol = vol.rotate_z(0 * i,(60,60,60))
-            rotated_phanpic = rotated_vol.tonumpy()
 
-            rotated_vol.modified()
+        self._HFieldStrength=np.zeros((self._Xn,self._Yn,self._Fn))
+        
+        vol = Volume(self._Phantom._Picture)
+        rotated_vol = vol.rotate_z(0,(60,60,60))
+        rotated_phanpic = rotated_vol.tonumpy()
+        for i in range(self._Fn):
             
-            # console.print("{}/{} is completed".format(i,self._Fn))
             Coeff = self._CoilSensitivity * self._Phantom._Mm * self._Phantom._Bcoeff * self._DeriDH[:, i]
             DHt = np.tile(self._DH[:, i], (self._Xn, self._Yn, 1))
             Gs = np.subtract(DHt, GSc)
             self._HFieldStrength[:, :, i ] = np.sqrt(Gs[:, :, 1] ** 2 + Gs[:, :, 0] ** 2)
 
             DLFTemp = (1 / ((self._Phantom._Bcoeff * self._HFieldStrength[:, :, i ]) ** 2)) - (1 / ((np.sinh(self._Phantom._Bcoeff * self._HFieldStrength[:, :, i ])) ** 2))
-            # DLF=np.zeros((self._Xn, self._Yn, 3))
-            DLFTemp = np.tile(DLFTemp,(121,1,1))
+            DLFTemp = np.tile(DLFTemp,(self._Zn,1,1))
             DLF = np.zeros((self._Zn,self._Xn,self._Yn,2))
             DLF[:,:,:,0] = DLFTemp
             DLF[:,:,:,1] = DLFTemp
@@ -200,25 +196,15 @@ class ScannerBaseClass(DataBaseClass, metaclass=abc.ABCMeta):
             [m,n,p] = rotated_phanpic.shape
             Phanpic = rotated_phanpic[m//2-60:m//2+61,n//2-60:n//2+61,p//2-60:p//2+61]
             Phanpic = np.tile(np.transpose(Phanpic), (2,1, 1, 1))
-            Phanpic = np.transpose(Phanpic)
-            # v = Volume(Phanpic)
-            # show(v,__doc__,axes=1).close()
-            # fig = plt.figure()
-            # plt.imshow(Phanpic[:,:,0])
-            # plt.show()
-            
-            # vol0 = Volume(DLFTemp).cmap('rainbow').add_scalarbar3d()
-            # vol1 = Volume(Phanpic[:,:,:,0]).cmap('rainbow').add_scalarbar3d()
-            # show([vol0,vol1],__doc__,axes=1).close()
-            Coeff = np.tile(Coeff, (self._Xn, self._Yn, self._Zn,1))
+            Phanpic = np.transpose(Phanpic).astype(np.float32)
+
+            vol1 = Volume(Phanpic[:,:,:,0])
+            vol2 = Volume(DLF[:,:,:,0])
+            show(vol1,vol2)
+            Coeff = np.tile(Coeff, (self._Zn, self._Xn, self._Yn,1))
             s = Phanpic * Coeff
             Sig = s * DLF
-            # fig = plt.figure()
-            # plt.imshow(s[0])
-            # plt.show()
-            # fig2 = plt.figure()
-            # plt.imshow(DLF[0])
-            # plt.show()
+            
             Voltage[0, i] = np.sum(Sig[:,:, :,0])
             Voltage[1, i] = np.sum(Sig[:,:, :,1])
             # Voltage[2, i] = np.sum(Sig[:,:, :])

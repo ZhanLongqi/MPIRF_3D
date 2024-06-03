@@ -29,11 +29,11 @@ class PPhantomClass(PhantomClass):
         C = np.zeros((self._Zn,self._Xn, self._Yn))
         for i in range(self._Zn):
             C[i,int(Xn * (14 / 121)):int(Xn * (105 / 121)), int(Yn * (29 / 121)):int(Yn * (90 / 121))] = np.ones(
-                (int(Xn * (105 / 121)) - int(Xn * (14 / 121)), int(Yn * (90 / 121)) - int(Yn * (29 / 121))))
+                (int(Xn * (105 / 121)) - int(Xn * (14 / 121)), int(Yn * (90 / 121)) - int(Yn * (29 / 121)))) * i
             C[i,int(Xn * (29 / 121)):int(Xn * (60 / 121)), int(Yn * (44 / 121)):int(Yn * (75 / 121))] = np.zeros(
-                (int(Xn * (60 / 121)) - int(Xn * (29 / 121)), int(Yn * (75 / 121)) - int(Yn * (44 / 121))))
+                (int(Xn * (60 / 121)) - int(Xn * (29 / 121)), int(Yn * (75 / 121)) - int(Yn * (44 / 121)))) * i
             C[i,int(Xn * (74 / 121)):int(Xn * (105 / 121)), int(Yn * (44 / 121)):int(Yn * (90 / 121))] = np.zeros(
-                (int(Xn * (105 / 121)) - int(Xn * (74 / 121)), int(Yn * (90 / 121)) - int(Yn * (44 / 121))))
+                (int(Xn * (105 / 121)) - int(Xn * (74 / 121)), int(Yn * (90 / 121)) - int(Yn * (44 / 121)))) * i
 
         # folder_path = '/Users/lonqi/Downloads/Stanford volume data 8bit/'
         # file_names = [f for f in os.listdir(folder_path)]
@@ -54,7 +54,7 @@ class PPhantomClass(PhantomClass):
             
 
 
-        # vol = Volume(volume)
+        # vol = Volume(C)
 
 
         # show(vol, __doc__, axes=1).close()
